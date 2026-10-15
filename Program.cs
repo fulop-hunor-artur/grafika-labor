@@ -111,14 +111,14 @@ namespace Szeminarium1
                 -0.5f, -0.5f, 0.0f,
                 +0.5f, -0.5f, 0.0f,
                  0.0f, +0.5f, 0.0f,
-                 1f, 1f, 0f
+                // 1f, 1f, 0f
             };
 
             float[] colorArray = new float[] {
                 1.0f, 0.0f, 0.0f, 1.0f,
                 0.0f, 1.0f, 0.0f, 1.0f,
-                0.0f, 0.0f, 1.0f, 1.0f,
-                1.0f, 0.0f, 0.0f, 1.0f,
+                //0.0f, 0.0f, 1.0f, 1.0f,
+                //1.0f, 0.0f, 0.0f, 1.0f,
             };
 
             uint[] indexArray = new uint[] { 
