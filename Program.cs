@@ -66,7 +66,7 @@ namespace Szeminarium1
             uint fshader = Gl.CreateShader(ShaderType.FragmentShader);
 
             Gl.ShaderSource(vshader, VertexShaderSource);
-            Gl.CompileShader(vshader);
+            Gl.CompileShader(vshader); // Ha hianyzik, "Vertex shader failed to compile"
             Gl.GetShader(vshader, ShaderParameterName.CompileStatus, out int vStatus);
             if (vStatus != (int)GLEnum.True)
                 throw new Exception("Vertex shader failed to compile: " + Gl.GetShaderInfoLog(vshader));
@@ -75,13 +75,16 @@ namespace Szeminarium1
             Gl.CompileShader(fshader);
 
             program = Gl.CreateProgram();
+            Gl.AttachShader(program, fshader); // No effect when swapped
             Gl.AttachShader(program, vshader);
-            Gl.AttachShader(program, fshader);
-            Gl.LinkProgram(program);
-            Gl.DetachShader(program, vshader);
-            Gl.DetachShader(program, fshader);
+            Gl.LinkProgram(program); // Ha hianyzik, "Error linking shader"
+            //Gl.DetachShader(program, vshader); // No effect
+            //Gl.DetachShader(program, fshader); // No effect
             Gl.DeleteShader(vshader);
             Gl.DeleteShader(fshader);
+
+            // "Error linking shader Program Link Failed for unknown reason."
+            //Gl.LinkProgram(program);
 
             Gl.GetProgram(program, GLEnum.LinkStatus, out var status);
             if (status == 0)
