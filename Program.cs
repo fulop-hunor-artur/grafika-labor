@@ -11,6 +11,7 @@ namespace Szeminarium1
 
         private static uint program;
 
+        // Mas szogbol nezzuk lol
         private static readonly string VertexShaderSource = @"
         #version 330 core
         layout (location = 0) in vec3 vPos;
@@ -21,11 +22,11 @@ namespace Szeminarium1
         void main()
         {
 			outCol = vCol;
-            gl_Position = vec4(vPos.x, vPos.y, vPos.z, 1.0);
+            gl_Position = vec4(vPos.y, vPos.x, vPos.z, 1.0);
         }
         ";
 
-
+        // Szinek ellentetet mutatja
         private static readonly string FragmentShaderSource = @"
         #version 330 core
         out vec4 FragColor;
@@ -34,7 +35,7 @@ namespace Szeminarium1
 
         void main()
         {
-            FragColor = outCol;
+            FragColor = 1 - outCol;
         }
         ";
 
