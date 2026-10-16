@@ -126,9 +126,9 @@ namespace Szeminarium1
             uint vao = Gl.GenVertexArray();
             Gl.BindVertexArray(vao);
             float xOff = 0f;
-            float yOff = -4.5f;
-            float scale = 0.1f;
-            float a = (float)Math.Tan(Math.PI / 6) * 4;
+            float yOff = -4.7f;
+            float scale = 0.2f;
+            float a = (float)Math.Tan(Math.PI / 6) * 4 - 2;
 
             float[] vertexArray = new float[] {
                  0, 0, 0, // A (alpha)
