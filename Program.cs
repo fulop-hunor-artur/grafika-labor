@@ -98,6 +98,25 @@ namespace Szeminarium1
             //Console.WriteLine($"Update after {deltaTime} [s]");
         }
 
+        private static void OffsetAndScale(float[] vertexArray, float offsetX, float offsetY, float scale) {
+            for (int i = 0; i < vertexArray.Count(); i += 3) {
+                vertexArray[i+0] = (vertexArray[i+0] + offsetX) * scale;
+                vertexArray[i+1] = (vertexArray[i+1] + offsetY) * scale;
+            }
+        }
+
+        private static float[] GetColorArray(float[] pallette, int[] sequence) {
+            const int STRIDE = 4;
+            float[] colorArray = new float[sequence.Length * STRIDE];
+            for (int i = 0; i < sequence.Length; i++) {
+                colorArray[i * STRIDE + 0] = pallette[sequence[i] * STRIDE + 0];
+                colorArray[i * STRIDE + 1] = pallette[sequence[i] * STRIDE + 1];
+                colorArray[i * STRIDE + 2] = pallette[sequence[i] * STRIDE + 2];
+                colorArray[i * STRIDE + 3] = pallette[sequence[i] * STRIDE + 3];
+            }
+            return colorArray;
+        }
+
         private static unsafe void GraphicWindow_Render(double deltaTime)
         {
             //Console.WriteLine($"Render after {deltaTime} [s]");
@@ -106,24 +125,46 @@ namespace Szeminarium1
 
             uint vao = Gl.GenVertexArray();
             Gl.BindVertexArray(vao);
+            float xOff = 0f;
+            float yOff = -4.5f;
+            float scale = 0.1f;
+            float a = (float)Math.Tan(Math.PI / 6) * 4;
 
             float[] vertexArray = new float[] {
-                -0.5f, -0.5f, 0.0f,
-                +0.5f, -0.5f, 0.0f,
-                 0.0f, +0.5f, 0.0f,
-                 1f, 1f, 0f
+                 0, 0, 0, // A (alpha)
+                 0, 0, 0, // A (beta)
+                -4, 2 + a, 0, // B (alpha)
+                 4, 2 + a, 0, // C (beta)
+                -4, 7, 0, // D (alpha)
+                -4, 7, 0, // D (omega)
+                 4, 7, 0, // E (beta)
+                 4, 7, 0, // E (omega)
+                 0, 4 + a, 0, // F (alpha)
+                 0, 4 + a, 0, // F (beta)
+                 0, 4 + a, 0, // F (omega)
+                 0, 9 + a, 0 // G (omega)
+            };
+            OffsetAndScale(vertexArray, xOff, yOff, scale);
+
+            float[] pallette = new float[] {
+                1.0f, 1.0f, 0.0f, 1.0f,
+                0.0f, 0.1f, 1.0f, 1.0f,
+                1.0f, 0.0f, 1.0f, 1.0f
             };
 
-            float[] colorArray = new float[] {
-                1.0f, 0.0f, 0.0f, 1.0f,
-                0.0f, 1.0f, 0.0f, 1.0f,
-                0.0f, 0.0f, 1.0f, 1.0f,
-                1.0f, 0.0f, 0.0f, 1.0f,
+            int[] colorSequence = new int[] {
+                0, 1, 0, 1, 0, 2, 1, 2, 0, 1, 2, 2
             };
+
+            float[] colorArray = GetColorArray(pallette, colorSequence);
 
             uint[] indexArray = new uint[] { 
-                0, 1, 2,
-                2, 1, 3
+                2, 0, 8,
+                8, 4, 2,
+                1, 3, 6,
+                6, 9, 1,
+                10, 7, 5,
+                7, 11, 5
             };
 
             uint vertices = Gl.GenBuffer();
