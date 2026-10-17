@@ -1,8 +1,12 @@
 ﻿using Silk.NET.OpenGL;
 using Silk.NET.Windowing;
+using System.Numerics;
 
 namespace Szeminarium1
 {
+
+
+
     internal static class Program
     {
         private static IWindow graphicWindow;
@@ -37,6 +41,53 @@ namespace Szeminarium1
             FragColor = outCol;
         }
         ";
+
+        public static float a = (float)Math.Tan(Math.PI / 6) * 4 - 2;
+        public static Vector3 A = new(0, 0, 0);
+        public static Vector3 B = new(-4, 2 + a, 0);
+        public static Vector3 C = new(4, 2 + a, 0);
+        public static Vector3 D = new(-4, 7, 0);
+        public static Vector3 E = new(4, 7, 0);
+        public static Vector3 F = new(0, 4 + a, 0);
+        public static Vector3 G = new(0, 9 + a, 0);
+
+        public static Vector3 RubicksMid(Vector3 a, Vector3 b) {
+            return a / 3 + b * 2 / 3;
+        }
+
+        public static Vector3[] TRINAGLE_VERTECES = new Vector3[] {
+            A, A, // (alpha, beta)
+            B, // (alpha)
+            C, // (beta)
+            D, D, // (alpha, omega)
+            E, E, // (beta, omega)
+            F, F, F, // (alpha, beta, omega)
+            G // (omega)
+        };
+
+        public static Vector3[] LINE_VERTECES = new Vector3[] {
+            A, B,
+            A, C,
+            A, F,
+            B, D,
+            C, E,
+            D, F,
+            D, G,
+            E, F,
+            E, G,
+            RubicksMid(A, B), RubicksMid(F, D),
+            RubicksMid(B, A), RubicksMid(D, F),
+            RubicksMid(A, F), RubicksMid(B, D),
+            RubicksMid(F, A), RubicksMid(D, B),
+            RubicksMid(A, C), RubicksMid(F, E),
+            RubicksMid(C, A), RubicksMid(E, F),
+            RubicksMid(A, F), RubicksMid(C, E),
+            RubicksMid(F, A), RubicksMid(E, C),
+            RubicksMid(F, E), RubicksMid(D, G),
+            RubicksMid(E, F), RubicksMid(G, D),
+            RubicksMid(F, D), RubicksMid(E, G),
+            RubicksMid(D, F), RubicksMid(G, E),
+        };
 
         static void Main(string[] args)
         {
@@ -117,6 +168,10 @@ namespace Szeminarium1
             return colorArray;
         }
 
+        private static float[] Flatten(Vector3[] vectors) {
+            return vectors.SelectMany<Vector3, float>(v => [v.X, v.Y, v.Z]).ToArray();
+        }
+
         private static unsafe void GraphicWindow_Render(double deltaTime)
         {
             //Console.WriteLine($"Render after {deltaTime} [s]");
@@ -130,25 +185,12 @@ namespace Szeminarium1
             float scale = 0.2f;
             float a = (float)Math.Tan(Math.PI / 6) * 4 - 2;
 
-            float[] vertexArray = new float[] {
-                 0, 0, 0, // A (alpha)
-                 0, 0, 0, // A (beta)
-                -4, 2 + a, 0, // B (alpha)
-                 4, 2 + a, 0, // C (beta)
-                -4, 7, 0, // D (alpha)
-                -4, 7, 0, // D (omega)
-                 4, 7, 0, // E (beta)
-                 4, 7, 0, // E (omega)
-                 0, 4 + a, 0, // F (alpha)
-                 0, 4 + a, 0, // F (beta)
-                 0, 4 + a, 0, // F (omega)
-                 0, 9 + a, 0 // G (omega)
-            };
+            float[] vertexArray = Flatten(TRINAGLE_VERTECES);
             OffsetAndScale(vertexArray, xOff, yOff, scale);
 
             float[] pallette = new float[] {
                 1.0f, 1.0f, 0.0f, 1.0f,
-                0.0f, 0.1f, 1.0f, 1.0f,
+                0.0f, 1.0f, 1.0f, 1.0f,
                 1.0f, 0.0f, 1.0f, 1.0f
             };
 
@@ -167,6 +209,9 @@ namespace Szeminarium1
                 7, 11, 5
             };
 
+            float[] lineVertexArray = Flatten(LINE_VERTECES);
+            OffsetAndScale(lineVertexArray, xOff, yOff, scale);
+
             uint vertices = Gl.GenBuffer();
             Gl.BindBuffer(GLEnum.ArrayBuffer, vertices);
             Gl.BufferData(GLEnum.ArrayBuffer, (ReadOnlySpan<float>)vertexArray.AsSpan(), GLEnum.StaticDraw);
@@ -182,16 +227,26 @@ namespace Szeminarium1
             uint indices = Gl.GenBuffer();
             Gl.BindBuffer(GLEnum.ElementArrayBuffer, indices);
             Gl.BufferData(GLEnum.ElementArrayBuffer, (ReadOnlySpan<uint>)indexArray.AsSpan(), GLEnum.StaticDraw);
-
             Gl.BindBuffer(GLEnum.ArrayBuffer, 0);
 
             Gl.UseProgram(program);
             
             Gl.DrawElements(GLEnum.Triangles, (uint)indexArray.Length, GLEnum.UnsignedInt, null); // we used element buffer
-            Gl.BindBuffer(GLEnum.ElementArrayBuffer, 0);
-            Gl.BindVertexArray(vao);
+
+            uint lineVertices = Gl.GenBuffer();
+            Gl.BindBuffer(GLEnum.ArrayBuffer, lineVertices);
+            Gl.BufferData(GLEnum.ArrayBuffer, (ReadOnlySpan<float>)lineVertexArray.AsSpan(), GLEnum.StaticDraw);
+            Gl.VertexAttribPointer(0, 3, VertexAttribPointerType.Float, false, 0, null);
+
+            // Instead of big array, I can disable the attribute array and tell it to use a constant value for it!
+            Gl.DisableVertexAttribArray(1);
+            Gl.VertexAttrib4(1, 0.0f, 0.0f, 0.0f, 1.0f);
+
+            Gl.LineWidth(3.0f);
+            Gl.DrawArrays(GLEnum.Lines, 0, (uint)(lineVertexArray.Length / 3));
 
             // always unbound the vertex buffer first, so no halfway results are displayed by accident
+            Gl.DeleteBuffer(lineVertices);
             Gl.DeleteBuffer(vertices);
             Gl.DeleteBuffer(colors);
             Gl.DeleteBuffer(indices);
