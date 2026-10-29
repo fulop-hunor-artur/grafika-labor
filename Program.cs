@@ -17,6 +17,8 @@ namespace GrafikaSzeminarium
         private static IInputContext inputContext;
 
         private static CameraDescriptor camera = new CameraDescriptor();
+        private static float rubicksAngle = targetRubicksAngle;
+        private static float targetRubicksAngle = 0;
 
         private const string ModelMatrixVariableName = "uModel";
         private const string ViewMatrixVariableName = "uView";
@@ -150,32 +152,16 @@ namespace GrafikaSzeminarium
 
         private static void Keyboard_KeyDown(IKeyboard keyboard, Key key, int arg3)
         {
-            /*
             switch (key)
             {
-                case Key.Left:
-                    camera.DecreaseZYAngle();
+                case Key.O:
+                    targetRubicksAngle += (float)Math.PI / 2;
                     break;
-                case Key.Right:
-                    camera.IncreaseZYAngle();
+                case Key.P:
+                    targetRubicksAngle -= (float)Math.PI / 2;
                     break;
-                case Key.Down:
-                    camera.IncreaseDistance();
-                    break;
-                case Key.Up:
-                    camera.DecreaseDistance();
-                    break;
-                case Key.U:
-                    camera.IncreaseZXAngle();
-                    break;
-                case Key.D:
-                    camera.DecreaseZXAngle();
-                    break;
-                case Key.Space:
-                    cubeArrangementModel.AnimationEnabled = !cubeArrangementModel.AnimationEnabled;
-                    break;
+                
             }
-            */
         }
 
         private static void NewCameraControls(double deltaTime) {
@@ -208,7 +194,8 @@ namespace GrafikaSzeminarium
                 if (keyboard.IsKeyPressed(Key.Space)) {
                     camera.ChangeLocalY((float)deltaTime * MOVEMENT_SPEED);
                 }
-                if (keyboard.IsKeyPressed(Key.ShiftLeft)) {
+                if (keyboard.IsKeyPressed(Key.ShiftLeft))
+                {
                     camera.ChangeLocalY((float)-deltaTime * MOVEMENT_SPEED);
                 }
             }
@@ -219,6 +206,11 @@ namespace GrafikaSzeminarium
             // NO OpenGL
             // make it threadsafe
             NewCameraControls(deltaTime);
+            if (targetRubicksAngle > rubicksAngle) {
+                rubicksAngle = (float)Math.Min(rubicksAngle + 0.05, targetRubicksAngle);
+            } else if (targetRubicksAngle < rubicksAngle) {
+                rubicksAngle = (float)Math.Max(rubicksAngle - 0.05, targetRubicksAngle);
+            }
             //cubeArrangementModel.AdvanceTime(deltaTime);
         }
 
@@ -239,8 +231,10 @@ namespace GrafikaSzeminarium
                 for (int j = 0; j < 3; j++) {
                     for (int k = 0; k < 3; k++) {
                         var scale = Matrix4X4.CreateScale(0.5f);
-                        var trans = Matrix4X4.CreateTranslation((i-1) * 0.55f, (j-1) * 0.55f, (k-1) * 0.55f);
-                        SetMatrix(scale * trans, ModelMatrixVariableName);
+                        var trans1 = Matrix4X4.CreateTranslation(0, 0, (k - 1) * 0.55f);
+                        var rot = Matrix4X4.CreateRotationZ(k == 0 ? rubicksAngle : 0);
+                        var trans2 = Matrix4X4.CreateTranslation((i - 1) * 0.55f, (j - 1) * 0.55f, 0);
+                        SetMatrix(scale * trans2 * rot * trans1, ModelMatrixVariableName);
                         DrawModelObject(rubicksCubes[i*9 + j*3 + k]);
                     }
                 }
