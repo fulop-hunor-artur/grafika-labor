@@ -14,10 +14,9 @@ namespace GrafikaSzeminarium
         private static GL Gl;
 
         private static ModelObjectDescriptor[] rubicksCubes;
+        private static IInputContext inputContext;
 
         private static CameraDescriptor camera = new CameraDescriptor();
-
-        private static CubeArrangementModel cubeArrangementModel = new CubeArrangementModel();
 
         private const string ModelMatrixVariableName = "uModel";
         private const string ViewMatrixVariableName = "uView";
@@ -83,7 +82,7 @@ namespace GrafikaSzeminarium
         {
             Gl = graphicWindow.CreateOpenGL();
 
-            var inputContext = graphicWindow.CreateInput();
+            inputContext = graphicWindow.CreateInput();
             foreach (var keyboard in inputContext.Keyboards)
             {
                 keyboard.KeyDown += Keyboard_KeyDown;
@@ -151,6 +150,7 @@ namespace GrafikaSzeminarium
 
         private static void Keyboard_KeyDown(IKeyboard keyboard, Key key, int arg3)
         {
+            /*
             switch (key)
             {
                 case Key.Left:
@@ -175,13 +175,51 @@ namespace GrafikaSzeminarium
                     cubeArrangementModel.AnimationEnabled = !cubeArrangementModel.AnimationEnabled;
                     break;
             }
+            */
+        }
+
+        private static void NewCameraControls(double deltaTime) {
+            float MOVEMENT_SPEED = 2.5f;
+            foreach (var keyboard in inputContext.Keyboards) {
+                if (keyboard.IsKeyPressed(Key.W)) {
+                    camera.ChangePitch((float)deltaTime);
+                }
+                if (keyboard.IsKeyPressed(Key.S)) {
+                    camera.ChangePitch((float)-deltaTime);
+                }
+                if (keyboard.IsKeyPressed(Key.A)) {
+                    camera.ChangeYaw((float)deltaTime);
+                }
+                if (keyboard.IsKeyPressed(Key.D)) {
+                    camera.ChangeYaw((float)-deltaTime);
+                }
+                if (keyboard.IsKeyPressed(Key.Up)) {
+                    camera.ChangeLocalXZ((float)deltaTime * MOVEMENT_SPEED);
+                }
+                if (keyboard.IsKeyPressed(Key.Down)) {
+                    camera.ChangeLocalXZ((float)-deltaTime * MOVEMENT_SPEED);
+                }
+                if (keyboard.IsKeyPressed(Key.Left)) {
+                    camera.ChangeLocalXZStrafe((float)-deltaTime * MOVEMENT_SPEED);
+                }
+                if (keyboard.IsKeyPressed(Key.Right)) {
+                    camera.ChangeLocalXZStrafe((float)deltaTime * MOVEMENT_SPEED);
+                }
+                if (keyboard.IsKeyPressed(Key.Space)) {
+                    camera.ChangeLocalY((float)deltaTime * MOVEMENT_SPEED);
+                }
+                if (keyboard.IsKeyPressed(Key.ShiftLeft)) {
+                    camera.ChangeLocalY((float)-deltaTime * MOVEMENT_SPEED);
+                }
+            }
         }
 
         private static void GraphicWindow_Update(double deltaTime)
         {
             // NO OpenGL
             // make it threadsafe
-            cubeArrangementModel.AdvanceTime(deltaTime);
+            NewCameraControls(deltaTime);
+            //cubeArrangementModel.AdvanceTime(deltaTime);
         }
 
         private static unsafe void GraphicWindow_Render(double deltaTime)
@@ -191,7 +229,7 @@ namespace GrafikaSzeminarium
 
             Gl.UseProgram(program);
 
-            var viewMatrix = Matrix4X4.CreateLookAt(camera.Position, camera.Target, camera.UpVector);
+            var viewMatrix = Matrix4X4.CreateLookAt(camera.Position, camera.Target, camera.Up);
             SetMatrix(viewMatrix, ViewMatrixVariableName);
 
             var projectionMatrix = Matrix4X4.CreatePerspectiveFieldOfView<float>((float)(Math.PI / 2), 1024f / 768f, 0.1f, 100f);

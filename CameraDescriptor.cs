@@ -5,88 +5,49 @@ namespace Szeminarium
 {
     internal class CameraDescriptor
     {
-        public double DistanceToOrigin { get; private set; } = 2;
+        public Vector3D<float> Position { get; private set; } = new(2, 2, 2);
 
-        public double AngleToZYPlane { get; private set; } = Math.PI/4;
+        public float Yaw { get; private set; } = 0;
+        public float Pitch { get; private set; } = 0;
+        public float Roll { get; private set; } = 0;
 
-        public double AngleToZXPlane { get; private set; } = Math.PI/5;
+        public Vector3D<float> Up = Vector3D<float>.UnitY;
 
-        const double DistanceScaleFactor = 1.1;
-
-        const double AngleChangeStepSize = Math.PI / 180 * 5;
-
-        /// <summary>
-        /// Gets the position of the camera.
-        /// </summary>
-        public Vector3D<float> Position
-        {
-            get
-            {
-                return GetPointFromAngles(DistanceToOrigin, AngleToZYPlane, AngleToZXPlane);
+        public Vector3D<float> Target {
+            get { 
+                return Position + Forward;
             }
         }
 
-        /// <summary>
-        /// Gets the up vector of the camera.
-        /// </summary>
-        public Vector3D<float> UpVector
-        {
-            get
-            {
-                return Vector3D.Normalize(GetPointFromAngles(DistanceToOrigin, AngleToZYPlane, AngleToZXPlane + Math.PI / 2));
+        public Vector3D<float> Forward {
+            get {
+                return Vector3D.Transform(
+                    -Vector3D<float>.UnitZ,
+                    Matrix4X4.CreateFromYawPitchRoll(Yaw, Pitch, Roll)
+                );
             }
         }
 
-        /// <summary>
-        /// Gets the target point of the camera view.
-        /// </summary>
-        public Vector3D<float> Target
-        {
-            get
-            {
-                // For the moment the camera is always pointed at the origin.
-                return Vector3D<float>.Zero;
-            }
+        public void ChangeYaw(float mult) {
+            Yaw += mult;
         }
 
-        public void IncreaseZXAngle()
-        {
-            AngleToZXPlane += AngleChangeStepSize;
+        public void ChangePitch(float mult) { 
+            Pitch += mult; 
         }
 
-        public void DecreaseZXAngle()
-        {
-            AngleToZXPlane -= AngleChangeStepSize;
+        public void ChangeLocalY(float mult) {
+            Position = Position + new Vector3D<float>(0f, mult, 0f);
         }
 
-        public void IncreaseZYAngle()
-        {
-            AngleToZYPlane += AngleChangeStepSize;
-
+        public void ChangeLocalXZ(float mult) {
+            var forwardXZ = Vector3D.Normalize(new Vector3D<float>(Forward.X, 0f, Forward.Z));
+            Position = Position + forwardXZ * mult;
         }
 
-        public void DecreaseZYAngle()
-        {
-            AngleToZYPlane -= AngleChangeStepSize;
-        }
-
-        public void IncreaseDistance()
-        {
-            DistanceToOrigin = DistanceToOrigin * DistanceScaleFactor;
-        }
-
-        public void DecreaseDistance()
-        {
-            DistanceToOrigin = DistanceToOrigin / DistanceScaleFactor;
-        }
-
-        private static Vector3D<float> GetPointFromAngles(double distanceToOrigin, double angleToMinZYPlane, double angleToMinZXPlane)
-        {
-            var x = distanceToOrigin * Math.Cos(angleToMinZXPlane) * Math.Sin(angleToMinZYPlane);
-            var z = distanceToOrigin * Math.Cos(angleToMinZXPlane) * Math.Cos(angleToMinZYPlane);
-            var y = distanceToOrigin * Math.Sin(angleToMinZXPlane);
-
-            return new Vector3D<float>((float)x, (float)y, (float)z);
+        public void ChangeLocalXZStrafe(float mult) {
+            var rightXZ = Vector3D.Normalize(Vector3D.Cross(Forward, Up));
+            Position = Position + rightXZ * mult;
         }
     }
 }
