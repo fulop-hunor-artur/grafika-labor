@@ -2,6 +2,7 @@
 using Silk.NET.Vulkan;
 using System;
 using System.Collections.Generic;
+using System.Drawing;
 using System.Linq;
 using System.Runtime.CompilerServices;
 using System.Text;
@@ -22,6 +23,11 @@ namespace GrafikaSzeminarium
         private GL Gl;
 
         public unsafe static ModelObjectDescriptor CreateCube(GL Gl)
+        {
+            return CreateCube(Gl, Color.Red, Color.Green, Color.Blue, Color.Yellow, Color.Magenta, Color.Cyan);
+        }
+
+        public unsafe static ModelObjectDescriptor CreateCube(GL Gl, Color c1, Color c2, Color c3, Color c4, Color c5, Color c6)
         {
             uint vao = Gl.GenVertexArray();
             Gl.BindVertexArray(vao);
@@ -60,37 +66,17 @@ namespace GrafikaSzeminarium
 
             };
 
-            float[] colorArray = new float[] {
-                1.0f, 0.0f, 0.0f, 1.0f,
-                1.0f, 0.0f, 0.0f, 1.0f,
-                1.0f, 0.0f, 0.0f, 1.0f,
-                1.0f, 0.0f, 0.0f, 1.0f,
-
-                0.0f, 1.0f, 0.0f, 1.0f,
-                0.0f, 1.0f, 0.0f, 1.0f,
-                0.0f, 1.0f, 0.0f, 1.0f,
-                0.0f, 1.0f, 0.0f, 1.0f,
-
-                0.0f, 0.0f, 1.0f, 1.0f,
-                0.0f, 0.0f, 1.0f, 1.0f,
-                0.0f, 0.0f, 1.0f, 1.0f,
-                0.0f, 0.0f, 1.0f, 1.0f,
-
-                1.0f, 0.0f, 1.0f, 1.0f,
-                1.0f, 0.0f, 1.0f, 1.0f,
-                1.0f, 0.0f, 1.0f, 1.0f,
-                1.0f, 0.0f, 1.0f, 1.0f,
-
-                0.0f, 1.0f, 1.0f, 1.0f,
-                0.0f, 1.0f, 1.0f, 1.0f,
-                0.0f, 1.0f, 1.0f, 1.0f,
-                0.0f, 1.0f, 1.0f, 1.0f,
-
-                1.0f, 1.0f, 0.0f, 1.0f,
-                1.0f, 1.0f, 0.0f, 1.0f,
-                1.0f, 1.0f, 0.0f, 1.0f,
-                1.0f, 1.0f, 0.0f, 1.0f,
-            };
+            float[] colorArray = new float[(vertexArray.Length / 3) * 4];
+            Color[] colorObjs = new Color[] { c1, c2, c3, c4, c5, c6 };
+            int ii = 0;
+            for (int i = 0; i < colorObjs.Length; i++) {
+                for (int j = 0; j < 4; j++) {
+                    colorArray[ii++] = colorObjs[i].R / 255f;
+                    colorArray[ii++] = colorObjs[i].G / 255f;
+                    colorArray[ii++] = colorObjs[i].B / 255f;
+                    colorArray[ii++] = colorObjs[i].A / 255f;
+                }
+            }
 
             uint[] indexArray = new uint[] {
                 0, 1, 2,

@@ -2,6 +2,7 @@
 using Silk.NET.Maths;
 using Silk.NET.OpenGL;
 using Silk.NET.Windowing;
+using System.Drawing;
 using Szeminarium;
 
 namespace GrafikaSzeminarium
@@ -12,7 +13,7 @@ namespace GrafikaSzeminarium
 
         private static GL Gl;
 
-        private static ModelObjectDescriptor cube;
+        private static ModelObjectDescriptor[] rubicksCubes;
 
         private static CameraDescriptor camera = new CameraDescriptor();
 
@@ -73,7 +74,8 @@ namespace GrafikaSzeminarium
 
         private static void GraphicWindow_Closing()
         {
-            cube.Dispose();
+            foreach (var cube in rubicksCubes)
+                cube.Dispose();
             Gl.DeleteProgram(program);
         }
 
@@ -87,7 +89,20 @@ namespace GrafikaSzeminarium
                 keyboard.KeyDown += Keyboard_KeyDown;
             }
 
-            cube = ModelObjectDescriptor.CreateCube(Gl);
+            rubicksCubes = new ModelObjectDescriptor[27];
+            for (int i = 0; i < 3; i++) {
+                for (int j = 0; j < 3; j++) {
+                    for (int k = 0; k < 3; k++) {
+                        Color c1 = j == 2 ? Color.Red : Color.Black;
+                        Color c2 = k == 2 ? Color.Blue : Color.Black;
+                        Color c3 = i == 0 ? Color.Green : Color.Black;
+                        Color c4 = j == 0 ? Color.Violet : Color.Black;
+                        Color c5 = k == 0 ? Color.Yellow : Color.Black;
+                        Color c6 = i == 2 ? Color.LightBlue : Color.Black;
+                        rubicksCubes[i * 9 + j * 3 + k] = ModelObjectDescriptor.CreateCube(Gl, c1, c2, c3, c4, c5, c6);
+                    }
+                }
+            }
 
             Gl.ClearColor(System.Drawing.Color.White);
             
@@ -182,11 +197,18 @@ namespace GrafikaSzeminarium
             var projectionMatrix = Matrix4X4.CreatePerspectiveFieldOfView<float>((float)(Math.PI / 2), 1024f / 768f, 0.1f, 100f);
             SetMatrix(projectionMatrix, ProjectionMatrixVariableName);
 
+            for (int i = 0; i < 3; i++) {
+                for (int j = 0; j < 3; j++) {
+                    for (int k = 0; k < 3; k++) {
+                        var scale = Matrix4X4.CreateScale(0.5f);
+                        var trans = Matrix4X4.CreateTranslation((i-1) * 0.55f, (j-1) * 0.55f, (k-1) * 0.55f);
+                        SetMatrix(scale * trans, ModelMatrixVariableName);
+                        DrawModelObject(rubicksCubes[i*9 + j*3 + k]);
+                    }
+                }
+            }
 
-            var modelMatrixCenterCube = Matrix4X4.CreateScale((float)cubeArrangementModel.CenterCubeScale);
-            SetMatrix(modelMatrixCenterCube, ModelMatrixVariableName);
-            DrawModelObject(cube);
-
+            /*
             Matrix4X4<float> diamondScale = Matrix4X4.CreateScale(0.25f);
             Matrix4X4<float> rotx = Matrix4X4.CreateRotationX((float)Math.PI / 4f);
             Matrix4X4<float> rotz = Matrix4X4.CreateRotationZ((float)Math.PI / 4f);
@@ -195,7 +217,8 @@ namespace GrafikaSzeminarium
             Matrix4X4<float> rotGlobalY = Matrix4X4.CreateRotationY((float)cubeArrangementModel.DiamondCubeGlobalYAngle);
             Matrix4X4<float> dimondCubeModelMatrix = diamondScale * rotx * rotz * roty * trans * rotGlobalY;
             SetMatrix(dimondCubeModelMatrix, ModelMatrixVariableName);
-            DrawModelObject(cube);
+            DrawModelObject(rubicksCubes[0]);
+            */
 
         }
 
