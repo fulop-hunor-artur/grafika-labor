@@ -6,13 +6,20 @@ namespace GrafikaSzeminarium
 {
     internal class RubiksCube : IDisposable
     {
+        private readonly record struct RotationAction(Axis Axis, int StripIndex, bool Backwards);
+
         private readonly GL gl;
+        private readonly Queue<RotationAction> actionQueue = new();
+        private readonly Random random = new();
+
         private ModelObjectDescriptor[] cubeModels = null!;
         private Matrix4X4<float>[] cubePersonalRotations = null!;
 
         private bool animating = false;
+        private bool isScrambling = false;
         private float animTimer = 0;
-        private const float MAX_ANIM_TIMER = 0.75f;
+        private const float MAX_ANIM_TIMER = 0.5f;
+        private const float SCRAMBLE_SPEED_MULTIPLIER = 3f;
         private Axis animAxis = Axis.X;
         private int animStripIndex = 0;
         private int animRotationMultiplier = 1; // 1 or -1
@@ -48,14 +55,53 @@ namespace GrafikaSzeminarium
 
         public void Rotate(Axis axis, int stripIndex, bool backwards = false)
         {
-            if (animating || stripIndex < 0 || stripIndex > 2)
+            if (isScrambling || stripIndex < 0 || stripIndex > 2)
                 return;
 
+            actionQueue.Enqueue(new RotationAction(axis, stripIndex, backwards));
+            TryStartNextAction();
+        }
+
+        public void Scramble(int steps = 30)
+        {
+            if (isScrambling || steps <= 0)
+                return;
+
+            Axis[] axes = Enum.GetValues<Axis>();
+            Axis axis;
+            int strip;
+            bool backwards;
+
+            for (int i = 0; i < steps; i++)
+            {
+                axis = axes[random.Next(axes.Length)];
+                strip = random.Next(3);
+                backwards = random.Next(2) == 1;
+
+                actionQueue.Enqueue(new RotationAction(axis, strip, backwards));
+            }
+
+            isScrambling = true;
+            TryStartNextAction();
+        }
+
+        private void TryStartNextAction()
+        {
+            if (animating)
+                return;
+
+            if (actionQueue.Count == 0)
+            {
+                isScrambling = false;
+                return;
+            }
+
+            RotationAction next = actionQueue.Dequeue();
             animating = true;
-            animAxis = axis;
-            animStripIndex = stripIndex;
+            animAxis = next.Axis;
+            animStripIndex = next.StripIndex;
+            animRotationMultiplier = next.Backwards ? -1 : 1;
             animTimer = 0;
-            animRotationMultiplier = backwards ? -1 : 1;
         }
 
         public void RotateEnd()
@@ -95,6 +141,8 @@ namespace GrafikaSzeminarium
 
             cubeModels = nextModels;
             cubePersonalRotations = nextRotations;
+
+            TryStartNextAction();
         }
 
         private bool IsInActiveStrip(int i, int j, int k)
@@ -133,7 +181,8 @@ namespace GrafikaSzeminarium
         {
             if (animating)
             {
-                animTimer += (float)deltaTime;
+                float speed = isScrambling ? SCRAMBLE_SPEED_MULTIPLIER : 1f;
+                animTimer += (float)deltaTime * speed;
                 if (animTimer >= MAX_ANIM_TIMER)
                 {
                     RotateEnd();

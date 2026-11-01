@@ -148,6 +148,8 @@ namespace GrafikaSzeminarium
                 case Key.Number7: rubiksCube.Rotate(Axis.Z, 0, reverse); break;
                 case Key.Number8: rubiksCube.Rotate(Axis.Z, 1, reverse); break;
                 case Key.Number9: rubiksCube.Rotate(Axis.Z, 2, reverse); break;
+
+                case Key.R: rubiksCube.Scramble(); break;
             }
         }
 
