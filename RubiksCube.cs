@@ -17,6 +17,8 @@ namespace GrafikaSzeminarium
 
         private bool animating = false;
         private bool isScrambling = false;
+        private bool isCelebrating = false;
+        private float celebrationTimer = 0f;
         private float animTimer = 0;
         private const float MAX_ANIM_TIMER = 0.5f;
         private const float SCRAMBLE_SPEED_MULTIPLIER = 3f;
@@ -55,7 +57,7 @@ namespace GrafikaSzeminarium
 
         public void Rotate(Axis axis, int stripIndex, bool backwards = false)
         {
-            if (isScrambling || stripIndex < 0 || stripIndex > 2)
+            if (isScrambling || isCelebrating || stripIndex < 0 || stripIndex > 2)
                 return;
 
             actionQueue.Enqueue(new RotationAction(axis, stripIndex, backwards));
@@ -66,6 +68,9 @@ namespace GrafikaSzeminarium
         {
             if (isScrambling || steps <= 0)
                 return;
+
+            isCelebrating = false;
+            celebrationTimer = 0f;
 
             Axis[] axes = Enum.GetValues<Axis>();
             Axis axis;
@@ -106,6 +111,7 @@ namespace GrafikaSzeminarium
 
         public void RotateEnd()
         {
+            bool wasScrambling = isScrambling;
             animTimer = 0;
             animating = false;
 
@@ -143,6 +149,23 @@ namespace GrafikaSzeminarium
             cubePersonalRotations = nextRotations;
 
             TryStartNextAction();
+
+            if (!wasScrambling && !animating && actionQueue.Count == 0 && IsSolved())
+            {
+                isCelebrating = true;
+                celebrationTimer = 0f;
+            }
+        }
+
+        public bool IsSolved()
+        {
+            Matrix4X4<float> refRot = cubePersonalRotations[0];
+            for (int i = 1; i < cubePersonalRotations.Length; i++)
+            {
+                if (cubePersonalRotations[i] != refRot)
+                    return false;
+            }
+            return true;
         }
 
         private bool IsInActiveStrip(int i, int j, int k)
@@ -179,6 +202,12 @@ namespace GrafikaSzeminarium
 
         public void Update(double deltaTime)
         {
+            if (isCelebrating)
+            {
+                celebrationTimer += (float)deltaTime;
+                return;
+            }
+
             if (animating)
             {
                 float speed = isScrambling ? SCRAMBLE_SPEED_MULTIPLIER : 1f;
@@ -196,6 +225,15 @@ namespace GrafikaSzeminarium
                 ? (animTimer / MAX_ANIM_TIMER) * (MathF.PI / 2f) * animRotationMultiplier
                 : 0f;
 
+            Matrix4X4<float> celebrationTransform = Matrix4X4<float>.Identity;
+            if (isCelebrating)
+            {
+                celebrationTransform =
+                    Matrix4X4.CreateScale(1f + 0.2f * MathF.Sin(celebrationTimer * 5f)) *
+                    Matrix4X4.CreateRotationZ(0.25f * MathF.Sin(celebrationTimer * 2f)) *
+                    Matrix4X4.CreateRotationY(celebrationTimer * 2.5f);
+            }
+
             for (int i = 0; i < 3; i++)
             {
                 for (int j = 0; j < 3; j++)
@@ -210,7 +248,7 @@ namespace GrafikaSzeminarium
                             ? CreateAxisRotation(animAxis, currentAngle)
                             : Matrix4X4<float>.Identity;
 
-                        setModelMatrix(scale * personalRot * pos * sliceRot);
+                        setModelMatrix(scale * personalRot * pos * sliceRot * celebrationTransform);
                         DrawModelObject(cubeModels[idx]);
                     }
                 }
