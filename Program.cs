@@ -133,14 +133,21 @@ namespace GrafikaSzeminarium
 
         private static void Keyboard_KeyDown(IKeyboard keyboard, Key key, int arg3)
         {
+            bool reverse = keyboard.IsKeyPressed(Key.ControlLeft) || keyboard.IsKeyPressed(Key.ControlRight);
+
             switch (key)
             {
-                case Key.O:
-                    rubiksCube.Rotate((float)Math.PI / 2);
-                    break;
-                case Key.P:
-                    rubiksCube.Rotate(-(float)Math.PI / 2);
-                    break;
+                case Key.Number1: rubiksCube.Rotate(Axis.X, 0, reverse); break;
+                case Key.Number2: rubiksCube.Rotate(Axis.X, 1, reverse); break;
+                case Key.Number3: rubiksCube.Rotate(Axis.X, 2, reverse); break;
+
+                case Key.Number4: rubiksCube.Rotate(Axis.Y, 0, reverse); break;
+                case Key.Number5: rubiksCube.Rotate(Axis.Y, 1, reverse); break;
+                case Key.Number6: rubiksCube.Rotate(Axis.Y, 2, reverse); break;
+
+                case Key.Number7: rubiksCube.Rotate(Axis.Z, 0, reverse); break;
+                case Key.Number8: rubiksCube.Rotate(Axis.Z, 1, reverse); break;
+                case Key.Number9: rubiksCube.Rotate(Axis.Z, 2, reverse); break;
             }
         }
 
