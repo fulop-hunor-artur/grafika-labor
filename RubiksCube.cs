@@ -14,7 +14,7 @@ namespace GrafikaSzeminarium
         private float animTimer = 0;
         private const float MAX_ANIM_TIMER = 0.75f;
         private Axis animAxis = Axis.X;
-        private int animAxisIndex = 0;
+        private int animStripIndex = 0;
         private int animRotationMultiplier = 1; // 1 or -1
 
         public RubiksCube(GL gl)
@@ -53,7 +53,7 @@ namespace GrafikaSzeminarium
 
             animating = true;
             animAxis = axis;
-            animAxisIndex = stripIndex;
+            animStripIndex = stripIndex;
             animTimer = 0;
             animRotationMultiplier = backwards ? -1 : 1;
         }
@@ -101,9 +101,9 @@ namespace GrafikaSzeminarium
         {
             return animAxis switch
             {
-                Axis.X => i == animAxisIndex,
-                Axis.Y => j == animAxisIndex,
-                Axis.Z => k == animAxisIndex,
+                Axis.X => i == animStripIndex,
+                Axis.Y => j == animStripIndex,
+                Axis.Z => k == animStripIndex,
                 _ => false
             };
         }
