@@ -1,8 +1,9 @@
-﻿using Silk.NET.Input;
+using Silk.NET.Input;
 using Silk.NET.Maths;
 using Silk.NET.OpenGL;
 using Silk.NET.Windowing;
 using System.Drawing;
+using System.Numerics;
 using Szeminarium;
 
 namespace GrafikaSzeminarium
@@ -17,6 +18,10 @@ namespace GrafikaSzeminarium
         private static IInputContext inputContext;
 
         private static CameraDescriptor camera = new CameraDescriptor();
+        private static bool cameraFrozen = false;
+        private static Vector2? lastMousePosition = null;
+        private const float MouseSensitivity = 0.002f;
+
         private static float rubicksAngle = targetRubicksAngle;
         private static float targetRubicksAngle = 0;
 
@@ -89,6 +94,11 @@ namespace GrafikaSzeminarium
             {
                 keyboard.KeyDown += Keyboard_KeyDown;
             }
+            foreach (var mouse in inputContext.Mice)
+            {
+                mouse.Cursor.CursorMode = CursorMode.Disabled;
+                mouse.MouseMove += Mouse_MouseMove;
+            }
 
             rubicksCubes = new ModelObjectDescriptor[27];
             for (int i = 0; i < 3; i++) {
@@ -150,10 +160,42 @@ namespace GrafikaSzeminarium
             }
         }
 
+        private static void Mouse_MouseMove(IMouse mouse, Vector2 position)
+        {
+            if (cameraFrozen)
+                return;
+
+            if (lastMousePosition == null)
+            {
+                lastMousePosition = position;
+                return;
+            }
+
+            float deltaX = position.X - lastMousePosition.Value.X;
+            float deltaY = position.Y - lastMousePosition.Value.Y;
+            lastMousePosition = position;
+
+            camera.ChangeYaw(-deltaX * MouseSensitivity);
+            camera.ChangePitch(-deltaY * MouseSensitivity);
+        }
+
+        private static void ToggleCameraFreeze()
+        {
+            cameraFrozen = !cameraFrozen;
+            lastMousePosition = null;
+            foreach (var mouse in inputContext.Mice)
+            {
+                mouse.Cursor.CursorMode = cameraFrozen ? CursorMode.Normal : CursorMode.Disabled;
+            }
+        }
+
         private static void Keyboard_KeyDown(IKeyboard keyboard, Key key, int arg3)
         {
             switch (key)
             {
+                case Key.Escape:
+                    ToggleCameraFreeze();
+                    break;
                 case Key.O:
                     targetRubicksAngle += (float)Math.PI / 2;
                     break;
@@ -165,30 +207,21 @@ namespace GrafikaSzeminarium
         }
 
         private static void NewCameraControls(double deltaTime) {
+            if (cameraFrozen)
+                return;
+
             float MOVEMENT_SPEED = 2.5f;
             foreach (var keyboard in inputContext.Keyboards) {
                 if (keyboard.IsKeyPressed(Key.W)) {
-                    camera.ChangePitch((float)deltaTime);
-                }
-                if (keyboard.IsKeyPressed(Key.S)) {
-                    camera.ChangePitch((float)-deltaTime);
-                }
-                if (keyboard.IsKeyPressed(Key.A)) {
-                    camera.ChangeYaw((float)deltaTime);
-                }
-                if (keyboard.IsKeyPressed(Key.D)) {
-                    camera.ChangeYaw((float)-deltaTime);
-                }
-                if (keyboard.IsKeyPressed(Key.Up)) {
                     camera.ChangeLocalXZ((float)deltaTime * MOVEMENT_SPEED);
                 }
-                if (keyboard.IsKeyPressed(Key.Down)) {
+                if (keyboard.IsKeyPressed(Key.S)) {
                     camera.ChangeLocalXZ((float)-deltaTime * MOVEMENT_SPEED);
                 }
-                if (keyboard.IsKeyPressed(Key.Left)) {
+                if (keyboard.IsKeyPressed(Key.A)) {
                     camera.ChangeLocalXZStrafe((float)-deltaTime * MOVEMENT_SPEED);
                 }
-                if (keyboard.IsKeyPressed(Key.Right)) {
+                if (keyboard.IsKeyPressed(Key.D)) {
                     camera.ChangeLocalXZStrafe((float)deltaTime * MOVEMENT_SPEED);
                 }
                 if (keyboard.IsKeyPressed(Key.Space)) {

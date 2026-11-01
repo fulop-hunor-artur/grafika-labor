@@ -1,14 +1,15 @@
-﻿
+
 using Silk.NET.Maths;
 
 namespace Szeminarium
 {
     internal class CameraDescriptor
     {
+        private const float MaxPitch = MathF.PI / 2f - 0.01f;
         public Vector3D<float> Position { get; private set; } = new(2, 2, 2);
 
-        public float Yaw { get; private set; } = 0;
-        public float Pitch { get; private set; } = 0;
+        public float Yaw { get; private set; } = MathF.PI / 4f;
+        public float Pitch { get; private set; } = -MathF.Asin(1f / MathF.Sqrt(3f));
         public float Roll { get; private set; } = 0;
 
         public Vector3D<float> Up = Vector3D<float>.UnitY;
@@ -33,7 +34,7 @@ namespace Szeminarium
         }
 
         public void ChangePitch(float mult) { 
-            Pitch += mult; 
+            Pitch = Math.Clamp(Pitch + mult, -MaxPitch, MaxPitch);
         }
 
         public void ChangeLocalY(float mult) {
