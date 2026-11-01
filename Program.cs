@@ -2,7 +2,6 @@ using Silk.NET.Input;
 using Silk.NET.Maths;
 using Silk.NET.OpenGL;
 using Silk.NET.Windowing;
-using System.Drawing;
 
 namespace GrafikaSzeminarium
 {
@@ -12,11 +11,8 @@ namespace GrafikaSzeminarium
 
         private static GL Gl;
 
-        private static ModelObjectDescriptor[] rubicksCubes;
+        private static RubiksCube rubiksCube;
         private static IInputContext inputContext;
-
-        private static float rubicksAngle = targetRubicksAngle;
-        private static float targetRubicksAngle = 0;
 
         private const string ModelMatrixVariableName = "uModel";
         private const string ViewMatrixVariableName = "uView";
@@ -73,8 +69,7 @@ namespace GrafikaSzeminarium
 
         private static void GraphicWindow_Closing()
         {
-            foreach (var cube in rubicksCubes)
-                cube.Dispose();
+            rubiksCube.Dispose();
             Gl.DeleteProgram(program);
         }
 
@@ -89,20 +84,7 @@ namespace GrafikaSzeminarium
             }
             InitCameraInput();
 
-            rubicksCubes = new ModelObjectDescriptor[27];
-            for (int i = 0; i < 3; i++) {
-                for (int j = 0; j < 3; j++) {
-                    for (int k = 0; k < 3; k++) {
-                        Color c1 = j == 2 ? Color.Red : Color.Black;
-                        Color c2 = k == 2 ? Color.Blue : Color.Black;
-                        Color c3 = i == 0 ? Color.Green : Color.Black;
-                        Color c4 = j == 0 ? Color.Violet : Color.Black;
-                        Color c5 = k == 0 ? Color.Yellow : Color.Black;
-                        Color c6 = i == 2 ? Color.LightBlue : Color.Black;
-                        rubicksCubes[i * 9 + j * 3 + k] = ModelObjectDescriptor.CreateCube(Gl, c1, c2, c3, c4, c5, c6);
-                    }
-                }
-            }
+            rubiksCube = new RubiksCube(Gl);
 
             Gl.ClearColor(System.Drawing.Color.White);
             
@@ -154,12 +136,11 @@ namespace GrafikaSzeminarium
             switch (key)
             {
                 case Key.O:
-                    targetRubicksAngle += (float)Math.PI / 2;
+                    rubiksCube.Rotate((float)Math.PI / 2);
                     break;
                 case Key.P:
-                    targetRubicksAngle -= (float)Math.PI / 2;
+                    rubiksCube.Rotate(-(float)Math.PI / 2);
                     break;
-                
             }
         }
 
@@ -168,11 +149,7 @@ namespace GrafikaSzeminarium
             // NO OpenGL
             // make it threadsafe
             NewCameraControls(deltaTime);
-            if (targetRubicksAngle > rubicksAngle) {
-                rubicksAngle = (float)Math.Min(rubicksAngle + 0.05, targetRubicksAngle);
-            } else if (targetRubicksAngle < rubicksAngle) {
-                rubicksAngle = (float)Math.Max(rubicksAngle - 0.05, targetRubicksAngle);
-            }
+            rubiksCube.Update(deltaTime);
             //cubeArrangementModel.AdvanceTime(deltaTime);
         }
 
@@ -189,28 +166,7 @@ namespace GrafikaSzeminarium
             var projectionMatrix = Matrix4X4.CreatePerspectiveFieldOfView<float>((float)(Math.PI / 2), 1024f / 768f, 0.1f, 100f);
             SetMatrix(projectionMatrix, ProjectionMatrixVariableName);
 
-            for (int i = 0; i < 3; i++) {
-                for (int j = 0; j < 3; j++) {
-                    for (int k = 0; k < 3; k++) {
-                        var scale = Matrix4X4.CreateScale(0.5f);
-                        var trans1 = Matrix4X4.CreateTranslation(0, 0, (k - 1) * 0.55f);
-                        var rot = Matrix4X4.CreateRotationZ(k == 0 ? rubicksAngle : 0);
-                        var trans2 = Matrix4X4.CreateTranslation((i - 1) * 0.55f, (j - 1) * 0.55f, 0);
-                        SetMatrix(scale * trans2 * rot * trans1, ModelMatrixVariableName);
-                        DrawModelObject(rubicksCubes[i*9 + j*3 + k]);
-                    }
-                }
-            }
-
-        }
-
-        private static unsafe void DrawModelObject(ModelObjectDescriptor modelObject)
-        {
-            Gl.BindVertexArray(modelObject.Vao);
-            Gl.BindBuffer(GLEnum.ElementArrayBuffer, modelObject.Indices);
-            Gl.DrawElements(PrimitiveType.Triangles, modelObject.IndexArrayLength, DrawElementsType.UnsignedInt, null);
-            Gl.BindBuffer(GLEnum.ElementArrayBuffer, 0);
-            Gl.BindVertexArray(0);
+            rubiksCube.Render(mx => SetMatrix(mx, ModelMatrixVariableName));
         }
 
         private static unsafe void SetMatrix(Matrix4X4<float> mx, string uniformName)
