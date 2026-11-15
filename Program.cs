@@ -19,6 +19,7 @@ namespace GrafikaSzeminarium
         private static ImGuiController imGuiController;
 
         private static ModelObjectDescriptor cube;
+        private static ModelObjectDescriptor diamondCube;
 
         private static CameraDescriptor camera = new CameraDescriptor();
 
@@ -36,6 +37,7 @@ namespace GrafikaSzeminarium
         private const string ShinenessVariableName = "uShininess";
 
         private static float shininess = 50;
+        private static Vector3 centerCubeFaceColor = new Vector3(1.0f, 0.0f, 0.0f);
 
         private static uint program;
 
@@ -58,6 +60,7 @@ namespace GrafikaSzeminarium
         private static void GraphicWindow_Closing()
         {
             cube.Dispose();
+            diamondCube.Dispose();
             Gl.DeleteProgram(program);
         }
 
@@ -83,6 +86,7 @@ namespace GrafikaSzeminarium
             imGuiController = new ImGuiController(Gl, graphicWindow, inputContext);
 
             cube = ModelObjectDescriptor.CreateCube(Gl);
+            diamondCube = ModelObjectDescriptor.CreateCube(Gl);
 
             Gl.ClearColor(System.Drawing.Color.White);
             
@@ -196,7 +200,6 @@ namespace GrafikaSzeminarium
             var projectionMatrix = Matrix4X4.CreatePerspectiveFieldOfView<float>((float)(Math.PI / 2), 1024f / 768f, 0.1f, 100f);
             SetMatrix(projectionMatrix, ProjectionMatrixVariableName);
 
-
             var modelMatrixCenterCube = Matrix4X4.CreateScale((float)cubeArrangementModel.CenterCubeScale);
             SetModelMatrix(modelMatrixCenterCube);
             DrawModelObject(cube);
@@ -209,11 +212,15 @@ namespace GrafikaSzeminarium
             Matrix4X4<float> rotGlobalY = Matrix4X4.CreateRotationY((float)cubeArrangementModel.DiamondCubeGlobalYAngle);
             Matrix4X4<float> dimondCubeModelMatrix = diamondScale * rotx * rotz * roty * trans * rotGlobalY;
             SetModelMatrix(dimondCubeModelMatrix);
-            DrawModelObject(cube);
+            DrawModelObject(diamondCube);
 
             //ImGuiNET.ImGui.ShowDemoWindow();
             ImGuiNET.ImGui.Begin("Lighting", ImGuiNET.ImGuiWindowFlags.AlwaysAutoResize | ImGuiNET.ImGuiWindowFlags.NoCollapse);
             ImGuiNET.ImGui.SliderFloat("Shininess", ref shininess, 5, 100);
+            if (ImGuiNET.ImGui.ColorEdit3("Center Cube Face Color", ref centerCubeFaceColor))
+            {
+                cube.SetFaceColor(0, centerCubeFaceColor.X, centerCubeFaceColor.Y, centerCubeFaceColor.Z);
+            }
             ImGuiNET.ImGui.End();
 
             imGuiController.Render();

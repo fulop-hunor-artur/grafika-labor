@@ -148,6 +148,21 @@ namespace GrafikaSzeminarium
 
         }
 
+        public unsafe void SetFaceColor(int faceIndex, float r, float g, float b)
+        {
+            float[] faceColors = new float[]
+            {
+                r, g, b, 1.0f,
+                r, g, b, 1.0f,
+                r, g, b, 1.0f,
+                r, g, b, 1.0f,
+            };
+
+            Gl.BindBuffer(GLEnum.ArrayBuffer, Colors);
+            Gl.BufferSubData(GLEnum.ArrayBuffer, (nint)(faceIndex * 16 * sizeof(float)), (ReadOnlySpan<float>)faceColors.AsSpan());
+            Gl.BindBuffer(GLEnum.ArrayBuffer, 0);
+        }
+
         protected virtual void Dispose(bool disposing)
         {
             if (!disposedValue)
