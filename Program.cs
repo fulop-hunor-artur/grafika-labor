@@ -40,7 +40,8 @@ namespace GrafikaSzeminarium
         private static Vector3 diffuseStrength = new Vector3(0.3f, 0.3f, 0.3f);
         private static Vector3 specularStrength = new Vector3(0.6f, 0.6f, 0.6f);
         private static Vector3 lightColor = new Vector3(1.0f, 1.0f, 1.0f);
-        private static Vector3 centerCubeFaceColor = new Vector3(1.0f, 0.0f, 0.0f);
+        private static Vector3 lightPosition = new Vector3(0.0f, 1.2f, 0.0f);
+        private static bool rubiksBackwardsFlag = false;
 
         private record struct MaterialPreset(string Name, Vector3 Ambient, Vector3 Diffuse, Vector3 Specular, float Shininess);
 
@@ -184,7 +185,7 @@ namespace GrafikaSzeminarium
             Gl.UseProgram(program);
 
             SetUniform3(LightColorVariableName, lightColor);
-            SetUniform3(LightPositionVariableName, new Vector3(0f, 1.2f, 0f));
+            SetUniform3(LightPositionVariableName, lightPosition);
             SetUniform3(ViewPositionVariableName, new Vector3(camera.Position.X, camera.Position.Y, camera.Position.Z));
             SetUniform1(ShinenessVariableName, shininess);
             SetUniform3(AmbientStrengthVariableName, ambientStrength);
@@ -214,6 +215,29 @@ namespace GrafikaSzeminarium
             ImGuiNET.ImGui.SliderFloat3("Diffuse Strength", ref diffuseStrength, 0.0f, 1.0f);
             ImGuiNET.ImGui.SliderFloat3("Specular Strength", ref specularStrength, 0.0f, 1.0f);
             ImGuiNET.ImGui.SliderFloat3("Light Color", ref lightColor, 0.0f, 1.0f);
+            ImGuiNET.ImGui.InputFloat3("Light Position", ref lightPosition);
+            if (ImGuiNET.ImGui.Button("Set Light to Camera Position"))
+            {
+                lightPosition = new Vector3(camera.Position.X, camera.Position.Y, camera.Position.Z);
+            }
+            ImGuiNET.ImGui.End();
+
+            ImGuiNET.ImGui.Begin("Rubiks Cube", ImGuiNET.ImGuiWindowFlags.AlwaysAutoResize | ImGuiNET.ImGuiWindowFlags.NoCollapse);
+            for (int i = 0; i < 3; i++) {
+                Axis axis = (Axis)i;
+                for (int j = 0; j < 3; j++) {
+                    if (j > 0) {
+                        ImGuiNET.ImGui.SameLine();
+                    }
+                    if (ImGuiNET.ImGui.SmallButton(axis.ToString() + j)) {
+                        rubiksCube.Rotate(axis, j, rubiksBackwardsFlag);
+                    }
+                }
+            }
+            ImGuiNET.ImGui.Checkbox("Rotate Backwards", ref rubiksBackwardsFlag);
+            if (ImGuiNET.ImGui.Button("Scramble")) {
+                rubiksCube.Scramble();
+            }
             ImGuiNET.ImGui.End();
 
             imGuiController.Render();
