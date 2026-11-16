@@ -46,6 +46,21 @@ namespace GrafikaSzeminarium
         private static Vector3 lightColor = new Vector3(1.0f, 1.0f, 1.0f);
         private static Vector3 centerCubeFaceColor = new Vector3(1.0f, 0.0f, 0.0f);
 
+        private record struct MaterialPreset(string Name, Vector3 Ambient, Vector3 Diffuse, Vector3 Specular, float Shininess);
+
+        private static readonly MaterialPreset[] materialPresets = new MaterialPreset[]
+        {
+            new("Default/None", new Vector3(0.1f, 0.1f, 0.1f), new Vector3(0.3f, 0.3f, 0.3f), new Vector3(0.6f, 0.6f, 0.6f), 50.0f),
+            new("Brass", new Vector3(0.329412f, 0.223529f, 0.027451f), new Vector3(0.780392f, 0.568627f, 0.113725f), new Vector3(0.992157f, 0.941176f, 0.807843f), 27.8974f),
+            new("Ruby", new Vector3(0.1745f, 0.01175f, 0.01175f), new Vector3(0.61424f, 0.04136f, 0.04136f), new Vector3(0.727811f, 0.626959f, 0.626959f), 76.8f),
+            new("Emerald", new Vector3(0.0215f, 0.1745f, 0.0215f), new Vector3(0.07568f, 0.61424f, 0.07568f), new Vector3(0.633f, 0.727811f, 0.633f), 76.8f),
+            new("Pearl", new Vector3(0.25f, 0.20725f, 0.20725f), new Vector3(1.0f, 0.829f, 0.829f), new Vector3(0.296648f, 0.296648f, 0.296648f), 11.264f),
+            new("Black Plastic", new Vector3(0.0f, 0.0f, 0.0f), new Vector3(0.01f, 0.01f, 0.01f), new Vector3(0.50f, 0.50f, 0.50f), 32.0f)
+        };
+
+        private static readonly string[] materialNames = materialPresets.Select(m => m.Name).ToArray();
+        private static int selectedMaterialIndex = 0;
+
         private static uint program;
 
         static void Main(string[] args)
@@ -226,6 +241,14 @@ namespace GrafikaSzeminarium
 
             //ImGuiNET.ImGui.ShowDemoWindow();
             ImGuiNET.ImGui.Begin("Lighting", ImGuiNET.ImGuiWindowFlags.AlwaysAutoResize | ImGuiNET.ImGuiWindowFlags.NoCollapse);
+            if (ImGuiNET.ImGui.Combo("Material", ref selectedMaterialIndex, materialNames, materialNames.Length))
+            {
+                var preset = materialPresets[selectedMaterialIndex];
+                ambientStrength = preset.Ambient;
+                diffuseStrength = preset.Diffuse;
+                specularStrength = preset.Specular;
+                shininess = preset.Shininess;
+            }
             ImGuiNET.ImGui.SliderFloat("Shininess", ref shininess, 5, 100);
             ImGuiNET.ImGui.SliderFloat3("Ambient Strength", ref ambientStrength, 0.0f, 1.0f);
             ImGuiNET.ImGui.SliderFloat3("Diffuse Strength", ref diffuseStrength, 0.0f, 1.0f);
