@@ -10,18 +10,17 @@ using Szeminarium;
 
 namespace GrafikaSzeminarium
 {
-    internal class Program
+    internal partial class Program
     {
         private static IWindow graphicWindow;
 
         private static GL Gl;
 
         private static ImGuiController imGuiController;
+        private static IInputContext inputContext;
 
         private static ModelObjectDescriptor cube;
         private static ModelObjectDescriptor diamondCube;
-
-        private static CameraDescriptor camera = new CameraDescriptor();
 
         private static CubeArrangementModel cubeArrangementModel = new CubeArrangementModel();
 
@@ -90,11 +89,12 @@ namespace GrafikaSzeminarium
         {
             Gl = graphicWindow.CreateOpenGL();
 
-            var inputContext = graphicWindow.CreateInput();
+            inputContext = graphicWindow.CreateInput();
             foreach (var keyboard in inputContext.Keyboards)
             {
                 keyboard.KeyDown += Keyboard_KeyDown;
             }
+            InitCameraInput();
 
             // Handle resizes
             graphicWindow.FramebufferResize += s =>
@@ -171,24 +171,6 @@ namespace GrafikaSzeminarium
         {
             switch (key)
             {
-                case Key.Left:
-                    camera.DecreaseZYAngle();
-                    break;
-                case Key.Right:
-                    camera.IncreaseZYAngle();
-                    break;
-                case Key.Down:
-                    camera.IncreaseDistance();
-                    break;
-                case Key.Up:
-                    camera.DecreaseDistance();
-                    break;
-                case Key.U:
-                    camera.IncreaseZXAngle();
-                    break;
-                case Key.D:
-                    camera.DecreaseZXAngle();
-                    break;
                 case Key.Space:
                     cubeArrangementModel.AnimationEnabled = !cubeArrangementModel.AnimationEnabled;
                     break;
@@ -199,6 +181,7 @@ namespace GrafikaSzeminarium
         {
             // NO OpenGL
             // make it threadsafe
+            NewCameraControls(deltaTime);
             cubeArrangementModel.AdvanceTime(deltaTime);
 
             imGuiController.Update((float)deltaTime);
@@ -219,7 +202,7 @@ namespace GrafikaSzeminarium
             SetUniform3(DiffuseStrengthVariableName, diffuseStrength);
             SetUniform3(SpecularStrengthVariableName, specularStrength);
 
-            var viewMatrix = Matrix4X4.CreateLookAt(camera.Position, camera.Target, camera.UpVector);
+            var viewMatrix = Matrix4X4.CreateLookAt(camera.Position, camera.Target, camera.Up);
             SetMatrix(viewMatrix, ViewMatrixVariableName);
 
             var projectionMatrix = Matrix4X4.CreatePerspectiveFieldOfView<float>((float)(Math.PI / 2), 1024f / 768f, 0.1f, 100f);
