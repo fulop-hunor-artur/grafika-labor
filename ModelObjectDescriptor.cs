@@ -34,39 +34,44 @@ namespace GrafikaSzeminarium
 
             // counter clockwise is front facing
             var vertexArray = new float[] {
-                -0.5f, 0.5f, 0.5f,
-                0.5f, 0.5f, 0.5f,
-                0.5f, 0.5f, -0.5f,
-                -0.5f, 0.5f, -0.5f,
+                // top face
+                -0.5f, 0.5f, 0.5f, 0f, 1f, 0f,
+                0.5f, 0.5f, 0.5f, 0f, 1f, 0f,
+                0.5f, 0.5f, -0.5f, 0f, 1f, 0f,
+                -0.5f, 0.5f, -0.5f, 0f, 1f, 0f,
 
-                -0.5f, 0.5f, 0.5f,
-                -0.5f, -0.5f, 0.5f,
-                0.5f, -0.5f, 0.5f,
-                0.5f, 0.5f, 0.5f,
+                // front face
+                -0.5f, 0.5f, 0.5f, 0f, 0f, 1f,
+                -0.5f, -0.5f, 0.5f, 0f, 0f, 1f,
+                0.5f, -0.5f, 0.5f, 0f, 0f, 1f,
+                0.5f, 0.5f, 0.5f, 0f, 0f, 1f,
 
-                -0.5f, 0.5f, 0.5f,
-                -0.5f, 0.5f, -0.5f,
-                -0.5f, -0.5f, -0.5f,
-                -0.5f, -0.5f, 0.5f,
+                // left face
+                -0.5f, 0.5f, 0.5f, -1f, 0f, 0f,
+                -0.5f, 0.5f, -0.5f, -1f, 0f, 0f,
+                -0.5f, -0.5f, -0.5f, -1f, 0f, 0f,
+                -0.5f, -0.5f, 0.5f, -1f, 0f, 0f,
 
-                -0.5f, -0.5f, 0.5f,
-                0.5f, -0.5f, 0.5f,
-                0.5f, -0.5f, -0.5f,
-                -0.5f, -0.5f, -0.5f,
+                // bottom face
+                -0.5f, -0.5f, 0.5f, 0f, -1f, 0f,
+                0.5f, -0.5f, 0.5f, 0f, -1f, 0f,
+                0.5f, -0.5f, -0.5f, 0f, -1f, 0f,
+                -0.5f, -0.5f, -0.5f, 0f, -1f, 0f,
 
-                0.5f, 0.5f, -0.5f,
-                -0.5f, 0.5f, -0.5f,
-                -0.5f, -0.5f, -0.5f,
-                0.5f, -0.5f, -0.5f,
+                // back face
+                0.5f, 0.5f, -0.5f, 0f, 0f, -1f,
+                -0.5f, 0.5f, -0.5f, 0f, 0f, -1f,
+                -0.5f, -0.5f, -0.5f, 0f, 0f, -1f,
+                0.5f, -0.5f, -0.5f, 0f, 0f, -1f,
 
-                0.5f, 0.5f, 0.5f,
-                0.5f, 0.5f, -0.5f,
-                0.5f, -0.5f, -0.5f,
-                0.5f, -0.5f, 0.5f,
-
+                // right face
+                0.5f, 0.5f, 0.5f, 1f, 0f, 0f,
+                0.5f, 0.5f, -0.5f, 1f, 0f, 0f,
+                0.5f, -0.5f, -0.5f, 1f, 0f, 0f,
+                0.5f, -0.5f, 0.5f, 1f, 0f, 0f,
             };
 
-            float[] colorArray = new float[(vertexArray.Length / 3) * 4];
+            float[] colorArray = new float[(vertexArray.Length / 6) * 4];
             Color[] colorObjs = new Color[] { c1, c2, c3, c4, c5, c6 };
             int ii = 0;
             for (int i = 0; i < colorObjs.Length; i++)
@@ -103,8 +108,15 @@ namespace GrafikaSzeminarium
             uint vertices = Gl.GenBuffer();
             Gl.BindBuffer(GLEnum.ArrayBuffer, vertices);
             Gl.BufferData(GLEnum.ArrayBuffer, (ReadOnlySpan<float>)vertexArray.AsSpan(), GLEnum.StaticDraw);
-            Gl.VertexAttribPointer(0, 3, VertexAttribPointerType.Float, false, 0, null);
+            // 0 is position
+            // 2 is normals
+            uint offsetPos = 0;
+            uint offsetNormals = offsetPos + 3 * sizeof(float);
+            uint vertexSize = offsetNormals + 3 * sizeof(float);
+            Gl.VertexAttribPointer(0, 3, VertexAttribPointerType.Float, false, vertexSize, (void*)offsetPos);
             Gl.EnableVertexAttribArray(0);
+            Gl.VertexAttribPointer(2, 3, VertexAttribPointerType.Float, true, vertexSize, (void*)offsetNormals);
+            Gl.EnableVertexAttribArray(2);
             Gl.BindBuffer(GLEnum.ArrayBuffer, 0);
 
             uint colors = Gl.GenBuffer();

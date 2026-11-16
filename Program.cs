@@ -19,10 +19,7 @@ namespace GrafikaSzeminarium
         private static ImGuiController imGuiController;
         private static IInputContext inputContext;
 
-        private static ModelObjectDescriptor cube;
-        private static ModelObjectDescriptor diamondCube;
-
-        private static CubeArrangementModel cubeArrangementModel = new CubeArrangementModel();
+        private static RubiksCube rubiksCube;
 
         private const string ModelMatrixVariableName = "uModel";
         private const string NormalMatrixVariableName = "uNormal";
@@ -80,8 +77,7 @@ namespace GrafikaSzeminarium
 
         private static void GraphicWindow_Closing()
         {
-            cube.Dispose();
-            diamondCube.Dispose();
+            rubiksCube.Dispose();
             Gl.DeleteProgram(program);
         }
 
@@ -107,8 +103,7 @@ namespace GrafikaSzeminarium
 
             imGuiController = new ImGuiController(Gl, graphicWindow, inputContext);
 
-            cube = ModelObjectDescriptor.CreateCube(Gl);
-            diamondCube = ModelObjectDescriptor.CreateCube(Gl);
+            rubiksCube = new RubiksCube(Gl);
 
             Gl.ClearColor(System.Drawing.Color.White);
             
@@ -169,12 +164,6 @@ namespace GrafikaSzeminarium
 
         private static void Keyboard_KeyDown(IKeyboard keyboard, Key key, int arg3)
         {
-            switch (key)
-            {
-                case Key.Space:
-                    cubeArrangementModel.AnimationEnabled = !cubeArrangementModel.AnimationEnabled;
-                    break;
-            }
         }
 
         private static void GraphicWindow_Update(double deltaTime)
@@ -182,7 +171,7 @@ namespace GrafikaSzeminarium
             // NO OpenGL
             // make it threadsafe
             NewCameraControls(deltaTime);
-            cubeArrangementModel.AdvanceTime(deltaTime);
+            rubiksCube.Update(deltaTime);
 
             imGuiController.Update((float)deltaTime);
         }
@@ -208,19 +197,7 @@ namespace GrafikaSzeminarium
             var projectionMatrix = Matrix4X4.CreatePerspectiveFieldOfView<float>((float)(Math.PI / 2), 1024f / 768f, 0.1f, 100f);
             SetMatrix(projectionMatrix, ProjectionMatrixVariableName);
 
-            var modelMatrixCenterCube = Matrix4X4.CreateScale((float)cubeArrangementModel.CenterCubeScale);
-            SetModelMatrix(modelMatrixCenterCube);
-            DrawModelObject(cube);
-
-            Matrix4X4<float> diamondScale = Matrix4X4.CreateScale(0.25f);
-            Matrix4X4<float> rotx = Matrix4X4.CreateRotationX((float)Math.PI / 4f);
-            Matrix4X4<float> rotz = Matrix4X4.CreateRotationZ((float)Math.PI / 4f);
-            Matrix4X4<float> roty = Matrix4X4.CreateRotationY((float)cubeArrangementModel.DiamondCubeLocalAngle);
-            Matrix4X4<float> trans = Matrix4X4.CreateTranslation(1f, 1f, 0f);
-            Matrix4X4<float> rotGlobalY = Matrix4X4.CreateRotationY((float)cubeArrangementModel.DiamondCubeGlobalYAngle);
-            Matrix4X4<float> dimondCubeModelMatrix = diamondScale * rotx * rotz * roty * trans * rotGlobalY;
-            SetModelMatrix(dimondCubeModelMatrix);
-            DrawModelObject(diamondCube);
+            rubiksCube.Render(SetModelMatrix);
 
             //ImGuiNET.ImGui.ShowDemoWindow();
             ImGuiNET.ImGui.Begin("Lighting", ImGuiNET.ImGuiWindowFlags.AlwaysAutoResize | ImGuiNET.ImGuiWindowFlags.NoCollapse);
@@ -237,10 +214,6 @@ namespace GrafikaSzeminarium
             ImGuiNET.ImGui.SliderFloat3("Diffuse Strength", ref diffuseStrength, 0.0f, 1.0f);
             ImGuiNET.ImGui.SliderFloat3("Specular Strength", ref specularStrength, 0.0f, 1.0f);
             ImGuiNET.ImGui.SliderFloat3("Light Color", ref lightColor, 0.0f, 1.0f);
-            if (ImGuiNET.ImGui.ColorEdit3("Center Cube Face Color", ref centerCubeFaceColor))
-            {
-                cube.SetFaceColor(0, centerCubeFaceColor.X, centerCubeFaceColor.Y, centerCubeFaceColor.Z);
-            }
             ImGuiNET.ImGui.End();
 
             imGuiController.Render();
