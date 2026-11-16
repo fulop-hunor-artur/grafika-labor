@@ -35,8 +35,15 @@ namespace GrafikaSzeminarium
         private const string ViewPositionVariableName = "uViewPos";
 
         private const string ShinenessVariableName = "uShininess";
+        private const string AmbientStrengthVariableName = "uAmbientStrength";
+        private const string DiffuseStrengthVariableName = "uDiffuseStrength";
+        private const string SpecularStrengthVariableName = "uSpecularStrength";
 
         private static float shininess = 50;
+        private static Vector3 ambientStrength = new Vector3(0.1f, 0.1f, 0.1f);
+        private static Vector3 diffuseStrength = new Vector3(0.3f, 0.3f, 0.3f);
+        private static Vector3 specularStrength = new Vector3(0.6f, 0.6f, 0.6f);
+        private static Vector3 lightColor = new Vector3(1.0f, 1.0f, 1.0f);
         private static Vector3 centerCubeFaceColor = new Vector3(1.0f, 0.0f, 0.0f);
 
         private static uint program;
@@ -189,10 +196,13 @@ namespace GrafikaSzeminarium
 
             Gl.UseProgram(program);
 
-            SetUniform3(LightColorVariableName, new Vector3(1f, 1f, 1f));
+            SetUniform3(LightColorVariableName, lightColor);
             SetUniform3(LightPositionVariableName, new Vector3(0f, 1.2f, 0f));
             SetUniform3(ViewPositionVariableName, new Vector3(camera.Position.X, camera.Position.Y, camera.Position.Z));
             SetUniform1(ShinenessVariableName, shininess);
+            SetUniform3(AmbientStrengthVariableName, ambientStrength);
+            SetUniform3(DiffuseStrengthVariableName, diffuseStrength);
+            SetUniform3(SpecularStrengthVariableName, specularStrength);
 
             var viewMatrix = Matrix4X4.CreateLookAt(camera.Position, camera.Target, camera.UpVector);
             SetMatrix(viewMatrix, ViewMatrixVariableName);
@@ -217,6 +227,10 @@ namespace GrafikaSzeminarium
             //ImGuiNET.ImGui.ShowDemoWindow();
             ImGuiNET.ImGui.Begin("Lighting", ImGuiNET.ImGuiWindowFlags.AlwaysAutoResize | ImGuiNET.ImGuiWindowFlags.NoCollapse);
             ImGuiNET.ImGui.SliderFloat("Shininess", ref shininess, 5, 100);
+            ImGuiNET.ImGui.SliderFloat3("Ambient Strength", ref ambientStrength, 0.0f, 1.0f);
+            ImGuiNET.ImGui.SliderFloat3("Diffuse Strength", ref diffuseStrength, 0.0f, 1.0f);
+            ImGuiNET.ImGui.SliderFloat3("Specular Strength", ref specularStrength, 0.0f, 1.0f);
+            ImGuiNET.ImGui.SliderFloat3("Light Color", ref lightColor, 0.0f, 1.0f);
             if (ImGuiNET.ImGui.ColorEdit3("Center Cube Face Color", ref centerCubeFaceColor))
             {
                 cube.SetFaceColor(0, centerCubeFaceColor.X, centerCubeFaceColor.Y, centerCubeFaceColor.Z);
